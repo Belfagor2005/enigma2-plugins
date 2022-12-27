@@ -1662,6 +1662,7 @@ class AudioPlayerSettings(Screen):
         self.list.append(getConfigListEntry(_("Screensaver Interval"), config.plugins.mc_ap.jpg_delay))
         self.list.append(getConfigListEntry(_("Screensaver Style:"), config.plugins.mc_ap.whichjpg))
         self.list.append(getConfigListEntry(_("Filelist Sorting:"), config.plugins.mc_ap_sortmode.enabled))
+        self.list.append(getConfigListEntry(_("Plugin Language:"), config.plugins.mc_ap.language))        
 
     def keyLeft(self):
         self["configlist"].handleKey(KEY_LEFT)
