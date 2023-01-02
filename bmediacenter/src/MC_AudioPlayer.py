@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 from __future__ import print_function, absolute_import
 from os import system, remove, remove, listdir, walk
 from os.path import split, dirname
@@ -20,7 +21,7 @@ from Screens.ChoiceBox import ChoiceBox
 from Screens.MessageBox import MessageBox
 from Screens.HelpMenu import HelpableScreen
 from Screens.InfoBarGenerics import InfoBarSeek
-from Tools.Directories import resolveFilename, fileExists, pathExists, SCOPE_MEDIA, SCOPE_PLAYLIST, SCOPE_SKIN_IMAGE
+from Tools.Directories import resolveFilename, fileExists, pathExists, SCOPE_MEDIA, SCOPE_PLAYLIST, SCOPE_SKIN_IMAGE, SCOPE_PLUGINS
 from six import ensure_str
 from requests import get, exceptions
 from twisted.internet.reactor import callInThread
@@ -30,6 +31,8 @@ from xml.etree.cElementTree import fromstring as cet_fromstring
 from .MC_Filelist import FileList
 from .__init__ import _  # for localized messages
 from time import strftime
+
+mcpath = "/usr/lib/enigma2/python/Plugins/Extensions/BMediaCenter/"
 
 config.plugins.mc_ap = ConfigSubsection()
 sorts = [('default', _("default")), ('alpha', _("alphabet")), ('alphareverse', _("alphabet backward")), ('date', _("date")), ('datereverse', _("date backward")), ('size', _("size")), ('sizereverse', _("size backward"))]
@@ -55,8 +58,10 @@ config.plugins.mc_ap.language = ConfigSelection(default=lang, choices=[
         ('zh', 'Cinese'),
         ('hi', 'Hindi'),
     ])
-#end edit lululla
 
+no_coverArt =  resolveFilename(SCOPE_PLUGINS, "Extensions/{}/skins/defaultHD/images/no_cover.png".format('BMediaCenter'))
+radirl = "http://radio.pervii.com/%s/top_radio_" % str(config.plugins.mc_ap.language.getValue()) #lululla add language on site is present
+# end edit lululla
 
 screensaverlist = [('default', _("default"))]
 hddpath = "/hdd/saver/"
@@ -66,9 +71,8 @@ if pathExists(hddpath):
         if pathExists(hddpath + x):
             screensaverlist += [(hddpath + '%s/' % (x), _("%s") % (x))]
 config.plugins.mc_ap.whichjpg = ConfigSelection(screensaverlist)
-playlist = []
 
-radirl = "http://radio.pervii.com/%s/top_radio_" % config.plugins.mc_ap.language.value() #lululla add language on site is present
+playlist = []
 
 FHD = getDesktop(0).size().width() == 1920
 
@@ -95,9 +99,6 @@ def getEncodedString(value):
             except UnicodeDecodeError:
                 returnValue = "n/a"
     return returnValue
-
-
-mcpath = "/usr/lib/enigma2/python/Plugins/Extensions/BMediaCenter/"
 
 
 def PlaylistEntryComponent(serviceref, state=None):
@@ -1069,29 +1070,55 @@ class MC_WebRadio(Screen, HelpableScreen):
     def menuCallback(self, choice):
         if choice is None:
             return
-        system("wget -O /tmp/pl.m3u " + (radirl + choice[1] + '.htm')) # + ".m3u")  # now download file 
+        system("wget -O /tmp/pl.m3u " + (radirl + choice[1] + '.htm')) # + ".m3u")
         self.session.openWithCallback(self.updd, MC_WebDown)
+
 
 class MC_WebDown(Screen):
     def __init__(self, session):
         Screen.__init__(self, session)
         channels = []
         if fileExists("/tmp/pl.m3u"):
-            names = open("/tmp/pl.m3u").read().split('\n')
-            lnk = ""
-            name = ""
-            #  no work this solution, the file is a page web, 
-            #  work with regex Eg. regexpls = 'stations_list">.*?alt="(.*?)".*?play_click(.*?);.*?</section'
-            #  for url, name etc etc etc...   
-            for x in names:
-                if x.startswith("#EXTINF:"):
-                    name = x.split("radio.pervii.com\%s\", " % config.plugins.mc_ap.language.value())[1]
-                elif x.startswith("http"):
-                    lnk = x
-                if name and lnk:
-                    channels.append((name, lnk))
-                    name = ""
-                    lnk = ""
+            """
+            names = open("/tmp/pl.m3u")
+            names = names.read().split('\n')
+            """
+            with open('/tmp/pl.m3u', 'r', encoding='utf-8') as f:
+                names = f.read()
+                print('names ', names)
+                print(type(names))
+                lnk = ""
+                name = ""
+                """
+                for x in names:
+                    if x.startswith("#EXTINF:"):
+                        name = x.split("radio.pervii.com\%s\", " % config.plugins.mc_ap.language.value())[1]
+                    elif x.startswith("http"):
+                        lnk = x
+                    if name and lnk:
+                        print('name ', name)
+                        print('lnk ', lnk)
+                        channels.append((name, lnk))
+                        name = ""
+                        lnk = ""
+                """
+                import re
+                n1 = names.find('stations_list">', 0)
+                n2 = names.find('/footer>', n1)
+                content = names[n1:n2]
+                print('content names 2 ', names)
+                regexnames = 'section class=.*?alt="(.*?)".*?play_click(.*?);.*?</section'
+                match = re.compile(regexnames, re.DOTALL).findall(names)
+                print('match ', match)
+                for name, url in match:
+                    lnk = url.replace('("', '').replace('")', '')
+                    print('name ', name)
+                    print('lnk ', lnk)
+                    if name and lnk:
+                        channels.append((name, lnk))
+                        name = ""
+                        lnk = ""
+
         self["menu"] = List(channels)
         self["actions"] = ActionMap(["OkCancelActions", "DirectionActions"],
         {
@@ -1592,7 +1619,7 @@ class MediaPixmap(Pixmap):
                     noCoverFile = value
                     break
         if noCoverFile is None:
-            noCoverFile = resolveFilename(SCOPE_SKIN_IMAGE, "skin_default/no_coverArt.png")
+            noCoverFile = no_coverArt  # resolveFilename(SCOPE_SKIN_IMAGE, "skin_default/no_coverArt.png")
         self.noCoverPixmap = LoadPixmap(noCoverFile)
         return Pixmap.applySkin(self, desktop, screen)
 
@@ -1664,7 +1691,7 @@ class AudioPlayerSettings(Screen):
         self.list.append(getConfigListEntry(_("Screensaver Interval"), config.plugins.mc_ap.jpg_delay))
         self.list.append(getConfigListEntry(_("Screensaver Style:"), config.plugins.mc_ap.whichjpg))
         self.list.append(getConfigListEntry(_("Filelist Sorting:"), config.plugins.mc_ap_sortmode.enabled))
-        self.list.append(getConfigListEntry(_("Plugin Language:"), config.plugins.mc_ap.language))        
+        self.list.append(getConfigListEntry(_("Plugin Language:"), config.plugins.mc_ap.language))
 
     def keyLeft(self):
         self["configlist"].handleKey(KEY_LEFT)
