@@ -1069,9 +1069,8 @@ class MC_WebRadio(Screen, HelpableScreen):
     def menuCallback(self, choice):
         if choice is None:
             return
-        system("wget -O /tmp/pl.m3u " + radirl + choice[1] + ".m3u")
+        system("wget -O /tmp/pl.m3u " + (radirl + choice[1] + '.htm')) # + ".m3u")  # now download file 
         self.session.openWithCallback(self.updd, MC_WebDown)
-
 
 class MC_WebDown(Screen):
     def __init__(self, session):
@@ -1081,6 +1080,9 @@ class MC_WebDown(Screen):
             names = open("/tmp/pl.m3u").read().split('\n')
             lnk = ""
             name = ""
+            #  no work this solution, the file is a page web, 
+            #  work with regex Eg. regexpls = 'stations_list">.*?alt="(.*?)".*?play_click(.*?);.*?</section'
+            #  for url, name etc etc etc...   
             for x in names:
                 if x.startswith("#EXTINF:"):
                     name = x.split("radio.pervii.com\%s\", " % config.plugins.mc_ap.language.value())[1]
