@@ -1,5 +1,7 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-#===============================================================================
+
+# ===============================================================================
 # Battleship Plugin by DarkVolli 2011
 #
 # This is free software; you can redistribute it and/or modify it under
@@ -7,10 +9,10 @@
 # Software Foundation; either version 2, or (at your option) any later
 # version.
 # Adapted from Lululla for Py3 Enigma2 20220713 - SKIN by MMark
-#===============================================================================
+# ===============================================================================
 from Plugins.Plugin import PluginDescriptor
 from Screens.Screen import Screen
-from Screens.MessageBox import MessageBox
+                                         
 from Components.Sources.CanvasSource import CanvasSource
 from Components.Button import Button
 from Components.Label import Label
@@ -19,7 +21,7 @@ from Tools.Directories import fileExists, resolveFilename, SCOPE_CURRENT_PLUGIN,
 from enigma import eTimer, gFont, getDesktop, RT_HALIGN_CENTER, RT_VALIGN_CENTER
 from xml.etree.cElementTree import parse
 from random import randint
-from os import remove
+import os
 VERSION = "7.1r0"
 SAVEFILE = resolveFilename(SCOPE_CURRENT_PLUGIN, "Extensions/Schiffe/schiffe.sav")
 
@@ -115,6 +117,7 @@ class GameCell:
 
         self.canvas.flush()
 
+
 # mainwindow...
 
 
@@ -134,18 +137,18 @@ class Schiffe(Screen):
             CELL_SIZE = 50
         # calculate skindata...
         CELL_OFFSET = 2
-        cellfield = XMAX * CELL_SIZE + (XMAX - 1) * CELL_OFFSET
-        CW = 2 * cellfield + 150  # canvas w
-        CH = cellfield         # canvas h
-        X0_OFFSET = 0                 # xoffset cellfield box
-        X1_OFFSET = cellfield + 150   # xoffset cellfield you
-        W = CW + 10           # window w
-        H = CH + 40           # window h
-        WX = cellfield + 10    # widgets xoffset
-        W0Y = 25                # widget0 yoffset
-        W1Y = cellfield - 116   # widget1 yoffset
-        W2Y = cellfield - 66    # widget2 yoffset
-        W3Y = cellfield - 16    # widget3 yoffset
+        cellfield = XMAX * CELL_SIZE + (XMAX-1) * CELL_OFFSET
+        CW = 2*cellfield + 150  # canvas w
+        CH = cellfield  # canvas h
+        X0_OFFSET = 0  # xoffset cellfield box
+        X1_OFFSET = cellfield + 150  # xoffset cellfield you
+        W = CW + 10  # window w
+        H = CH + 40  # window h
+        WX = cellfield + 10  # widgets xoffset
+        W0Y = 25  # widget0 yoffset
+        W1Y = cellfield - 116  # widget1 yoffset
+        W2Y = cellfield - 66  # widget2 yoffset
+        W3Y = cellfield - 16  # widget3 yoffset
 
         # set skin...
         Schiffe.skin = """
@@ -167,11 +170,11 @@ class Schiffe(Screen):
                     <ePixmap position="1050,170" size="130,400" pixmap="/usr/lib/enigma2/python/Plugins/Extensions/Schiffe/pic/ship.jpg" zPosition="5" />
                     <widget name="message" position="50,10" size="350,70" valign="center" halign="center" font="Regular;40" foregroundColor="yellow" backgroundColor="#000000" transparent="1" zPosition="1" />
                     <widget source="Canvas" render="Canvas" position="520,150" size="1200,550" backgroundColor="#60ffffff" transparent="1" alphatest="blend" zPosition="2" />
-                    <ePixmap position="50,150" pixmap="buttons/key_green.png" size="80,40" alphatest="blend" zPosition="2" />
+                    <ePixmap position="50,150" pixmap="skin_default/buttons/key_green.png" size="80,40" alphatest="blend" zPosition="2" />
                     <widget name="key_green" font="Regular;30" position="135,150" size="450,40" halign="left" valign="center" backgroundColor="black" zPosition="1" transparent="1" />
-                    <ePixmap position="50,200" pixmap="buttons/key_red.png" size="80,40" alphatest="blend" zPosition="2" />
+                    <ePixmap position="50,200" pixmap="skin_default/buttons/key_red.png" size="80,40" alphatest="blend" zPosition="2" />
                     <widget name="key_red" font="Regular;30" position="135,200" size="450,40" halign="left" valign="center" backgroundColor="black" zPosition="1" transparent="1" />
-                    <ePixmap position="50,250" pixmap="buttons/key_blue.png" size="80,40" alphatest="blend" zPosition="2" />
+                    <ePixmap position="50,250" pixmap="skin_default/buttons/key_blue.png" size="80,40" alphatest="blend" zPosition="2" />
                     <widget name="key_blue" font="Regular;30" position="135,250" size="450,40" halign="left" valign="center" backgroundColor="black" zPosition="1" transparent="1" />
                     <eLabel position="50,300" size="300,3" backgroundColor="#202020" zPosition="1" />
                     <ePixmap position="48,332" size="80,80" pixmap="/usr/lib/enigma2/python/Plugins/Extensions/Schiffe/pic/rocket.png" alphatest="blend" zPosition="1" />
@@ -223,22 +226,25 @@ class Schiffe(Screen):
         self["movex"] = Label(_(""))
         self.cnt = 0
         self.timer = eTimer()
-        self.timer.callback.append(self.timerHandler)
-
+        if os.path.exists('/var/lib/dpkg/info'):
+            self.timer_conn = self.timer.timeout.connect(self.timerHandler)
+        else:
+            self.timer.callback.append(self.timerHandler)
+        self.timer.start(150, 1)
         self.message = 0
 
         self["actions"] = ActionMap(["WizardActions", "ColorActions", "SetupActions"],
-        {
-            "ok": self.ok_pressed,
-            "up": self.up_pressed,
-            "down": self.down_pressed,
-            "left": self.left_pressed,
-            "right": self.right_pressed,
-            "red": self.quit_game,
-            "green": self.new_game,
-            "blue": self.solve_game,
-            "cancel": self.quit_game
-        })
+                                    {
+                                        "ok": self.ok_pressed,
+                                        "up": self.up_pressed,
+                                        "down": self.down_pressed,
+                                        "left": self.left_pressed,
+                                        "right": self.right_pressed,
+                                        "red": self.quit_game,
+                                        "green": self.new_game,
+                                        "blue": self.solve_game,
+                                        "cancel": self.quit_game
+                                    })
 
         # fill canvas with background color...
         self["Canvas"].fill(0, 0, CW, CH, bgcolor)
@@ -251,17 +257,17 @@ class Schiffe(Screen):
         for j in range(YMAX):
             for i in range(XMAX):
                 cell = GameCell(self["Canvas"],
-                                  i * (CELL_SIZE + CELL_OFFSET) + X0_OFFSET,
-                                  j * (CELL_SIZE + CELL_OFFSET),
-                                  CELL_SIZE, CELL_SIZE)
+                                i * (CELL_SIZE + CELL_OFFSET) + X0_OFFSET,
+                                j * (CELL_SIZE + CELL_OFFSET),
+                                CELL_SIZE, CELL_SIZE)
                 self.boxCells.append(cell)
 
         for j in range(YMAX):
             for i in range(XMAX):
                 cell = GameCell(self["Canvas"],
-                                  i * (CELL_SIZE + CELL_OFFSET) + X1_OFFSET,
-                                  j * (CELL_SIZE + CELL_OFFSET),
-                                  CELL_SIZE, CELL_SIZE)
+                                i * (CELL_SIZE + CELL_OFFSET) + X1_OFFSET,
+                                j * (CELL_SIZE + CELL_OFFSET),
+                                CELL_SIZE, CELL_SIZE)
                 self.youCells.append(cell)
 
         self.onLayoutFinish.append(self.load_game)
@@ -358,12 +364,12 @@ class Schiffe(Screen):
 
     # displays moves and time in title...
     def timerHandler(self):
-            if isFHD():
-                self["result"].setText("%10d shots" % self.moves)
-                self["movex"].setText("%10d sec" % self.cnt)
-            else:
-                self.instance.setTitle("Schiffe versenken %s %10d shots %10d sec" % (VERSION, self.moves, self.cnt))
-            self.cnt += 1
+        if isFHD():
+            self["result"].setText("%10d shots" % self.moves)
+            self["movex"].setText("%10d sec" % self.cnt)
+        else:
+            self.instance.setTitle("Schiffe versenken %s %10d shots %10d sec" % (VERSION, self.moves, self.cnt))
+        self.cnt += 1
 
     # create new game...
     def new_game(self, loadFromFile=False):
@@ -414,17 +420,17 @@ class Schiffe(Screen):
     def save_game(self):
         try:
             # if not self.gameover:
-                sav = open(SAVEFILE, "w")
-                sav.write("%d %d\n" % (self.moves, self.cnt))
-                for i, cell in enumerate(self.boxCells):
-                    sav.write("%d " % cell.value())
-                    if (i + 1) % XMAX == 0:
-                        sav.write("\n")
-                for i, cell in enumerate(self.youCells):
-                    sav.write("%d " % cell.value())
-                    if (i + 1) % XMAX == 0:
-                        sav.write("\n")
-                sav.close()
+            sav = open(SAVEFILE, "w")
+            sav.write("%d %d\n" % (self.moves, self.cnt))
+            for i, cell in enumerate(self.boxCells):
+                sav.write("%d " % cell.value())
+                if (i + 1) % XMAX == 0:
+                    sav.write("\n")
+            for i, cell in enumerate(self.youCells):
+                sav.write("%d " % cell.value())
+                if (i + 1) % XMAX == 0:
+                    sav.write("\n")
+            sav.close()
             # else:
                 # # gameover no savefile needed...
                 # if fileExists(SAVEFILE):
@@ -473,9 +479,13 @@ class Schiffe(Screen):
         self.timer.stop()
         self.save_game()
         self.close()
-###### enigma2 stuff ends here... ######
+                                        
 
-#good old C function :D
+
+# enigma2 stuff ends here... ######
+
+
+# good old C function :D
 
 
 def rand():
@@ -541,6 +551,7 @@ def ships(field):
 
     # everything is fine...
     return True
+
 
 # calcNewField is derived from C++ source code by Stephan Dobretsberger 2001
 
